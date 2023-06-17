@@ -1,45 +1,42 @@
-import { useState } from 'react'; // useXXXは react hook
+import { useState } from 'react';
 
 import NewPost from './NewPost';
 import Post from './Post';
 import classes from './PostsList.module.css';
 import Modal from './Modal';
 
-function PostsList() {
-  const [modalIsVisible, setModalIsVisible] = useState(true);
-  const [enteredBody, setEnteredBody] = useState(''); // useStateの0,1番目の要素を定義
-  const [enteredAuthor, setEnteredAuthor] = useState(''); // useStateの0,1番目の要素を定義
+function PostsList({ isPosting, onStopPosting }) {
+  const [posts, setPosts] = useState([]);
 
-  function hideModalHandler() {
-    setModalIsVisible(false);
-  }
-
-  function bodyChangedHandler(event) {
-    setEnteredBody(event.target.value); //このcomponent関数が再実行される
-  }
-
-  function authorChangedHandler(event) {
-    setEnteredAuthor(event.target.value); //このcomponent関数が再実行される
-  }
-
-  let modalContent;
-
-  if (modalIsVisible) {
-    modalContent = (
-      <Modal onClose={hideModalHandler}>
-        <NewPost onBodyChange={bodyChangedHandler} onAuthorChange={authorChangedHandler} />
-      </Modal>
+  function addPostHandler(postData) {
+    setPosts(existingPosts =>
+      // 最新のstateのsnapshotをexistingPostsでもらう
+      [postData, ...existingPosts],
     );
   }
 
   return (
     <>
-      {modalContent}
-      <ul className={classes.posts}>
-        <Post author={enteredAuthor} body={enteredBody} />
-        <Post author="Lee" body="React.js is awesome!" />
-        <Post author="Park" body="React.js is awesome!" />
-      </ul>
+      {isPosting && (
+        <Modal onClose={onStopPosting}>
+          <NewPost onCancel={onStopPosting} onAddPost={addPostHandler} />
+        </Modal>
+      )}
+      {posts.length > 0 && (
+        <ul className={classes.posts}>
+          {posts.map(post => (
+            <Post key={post.body} author={post.author} body={post.body} />
+            // uniqueなkeyを指定することで、Reactが効率的に再描画する
+            // 普通はidを使うが、今回はbodyを使う
+          ))}
+        </ul>
+      )}
+      {posts.length === 0 && (
+        <div style={{ textAlign: 'center', color: 'white' }}>
+          <h2>There are no posts yet.</h2>
+          <p>Start adding some!</p>
+        </div>
+      )}
     </>
   );
 }
